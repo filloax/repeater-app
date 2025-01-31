@@ -44,8 +44,13 @@ const Field = (props: FieldProps) => {
         valueName = 'Value', 
         keyName = "Item Name", 
         multiLineValues = false,
+        maxPageItems,
     } = props.sdk.parameters.instance as any;
-    const [items, setItems] = useState<Item[]>([]);
+    const [state, setState] = useState<{items: Item[], page: number}>({
+        items: [],
+        page: 0,
+    });
+    const { items, page } = state;
 
     useEffect(() => {
         // This ensures our app has enough space to render
@@ -54,15 +59,22 @@ const Field = (props: FieldProps) => {
         // Every time we change the value on the field, we update internal state
         props.sdk.field.onValueChanged((value: Item[]) => {
             if (Array.isArray(value)) {
-                setItems(value);
+                setState(prevState => ({...prevState, items: value}));
             }
         });
-    });
+    }, [props.sdk.field, props.sdk.window]);
 
     /** Adds another item to the list */
     const addNewItem = () => {
         props.sdk.field.setValue([...items, createItem()]);
     };
+
+    const setPage = (page: number) => {
+        console.log("Set page", state);
+        setState(prevState => ({...prevState, page}));
+    }
+    const incPage = () => setPage(page + 1);
+    const decPage = () => setPage(page - 1);
 
     /** Creates an `onChange` handler for an item based on its `property`
      * @returns A function which takes an `onChange` event 
@@ -83,11 +95,58 @@ const Field = (props: FieldProps) => {
         props.sdk.field.setValue(items.filter((i) => i.id !== item.id));
     };
 
+    let displayItems = items;
+    let numPages = 1
+    if (maxPageItems) {
+        displayItems = displayItems.slice(page * maxPageItems, page * maxPageItems + maxPageItems)
+        numPages = Math.ceil(items.length / maxPageItems)
+    }
+
+    const pagination = (maxPageItems)
+        ? (<div style={{ marginTop: tokens.spacingS, marginBottom: tokens.spacingS }}>
+            <Button 
+                buttonType="muted"
+                onClick={decPage}
+                icon="ChevronLeft"
+                disabled={page <= 0}
+                style={{ marginRight: tokens.spacingXs }}
+            ></Button> 
+            <Button 
+                buttonType="muted"
+                style={{ margin: "0 " + tokens.spacingXs }}
+                disabled={true}
+            >
+                {page + 1} / {numPages} {/* Display current page number */}
+            </Button>
+            <Button 
+                buttonType="muted"
+                onClick={incPage}
+                icon="ChevronRight"
+                disabled={page >= numPages - 1}
+                style={{ marginLeft: tokens.spacingXs }}
+            ></Button>
+        </div>)
+        : null;
+
+    const newPage = (page === numPages - 1)
+        ? (
+            <Button
+                buttonType="naked"
+                onClick={addNewItem}
+                icon="PlusCircle"
+                style={{ marginTop: tokens.spacingS }}
+            >
+                Add Item
+            </Button>
+        )
+        : null;
+
     return (
         <div>
+            {pagination}
             <Table>
                 <TableBody>
-                    {items.map((item) => (
+                    {displayItems.map((item) => (
                         <TableRow key={item.id}>
                             <TableCell>
                                 <TextField
@@ -119,14 +178,8 @@ const Field = (props: FieldProps) => {
                     ))}
                 </TableBody>
             </Table>
-            <Button
-                buttonType="naked"
-                onClick={addNewItem}
-                icon="PlusCircle"
-                style={{ marginTop: tokens.spacingS }}
-            >
-                Add Item
-            </Button>
+            {newPage}
+            {pagination}
         </div>
     );
 };
