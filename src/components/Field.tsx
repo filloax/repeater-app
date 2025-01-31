@@ -40,7 +40,11 @@ function createItem(): Item {
  * The Field expects and uses a `Contentful JSON field`
  */
 const Field = (props: FieldProps) => {
-    const { valueName = 'Value' } = props.sdk.parameters.instance as any;
+    const { 
+        valueName = 'Value', 
+        keyName = "Item Name", 
+        multiLineValues = false,
+    } = props.sdk.parameters.instance as any;
     const [items, setItems] = useState<Item[]>([]);
 
     useEffect(() => {
@@ -89,7 +93,7 @@ const Field = (props: FieldProps) => {
                                 <TextField
                                     id="key"
                                     name="key"
-                                    labelText="Item Name"
+                                    labelText={keyName}
                                     value={item.key}
                                     onChange={createOnChangeHandler(item, 'key')}
                                 />
@@ -101,6 +105,7 @@ const Field = (props: FieldProps) => {
                                     labelText={valueName}
                                     value={item.value}
                                     onChange={createOnChangeHandler(item, 'value')}
+                                    textarea={multiLineValues}
                                 />
                             </TableCell>
                             <TableCell align="right">
