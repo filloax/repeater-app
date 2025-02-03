@@ -2,10 +2,9 @@ import React, { useEffect, useState } from 'react';
 import tokens from '@contentful/forma-36-tokens';
 import { FieldExtensionSDK } from '@contentful/app-sdk';
 import { v4 as uuid } from 'uuid';
-
 import { Button, Table, FormControl, TextInput, Textarea, IconButton } from "@contentful/f36-components";
-
-import { ChevronLeftIcon, ChevronRightIcon, PlusCircleIcon, DeleteIcon } from "@contentful/f36-icons";
+import { PlusCircleIcon, DeleteIcon } from "@contentful/f36-icons";
+import { Pagination } from '@contentful/f36-pagination';
 
 interface FieldProps {
     sdk: FieldExtensionSDK;
@@ -29,6 +28,12 @@ function createItem(): Item {
     };
 }
 
+function removeDuplicates(a: number[]) {
+    return a.sort((a, b) => a - b).filter(function(item, pos, ary) {
+        return !pos || item != ary[pos - 1];
+    });
+}
+
 /** The Field component is the Repeater App which shows up 
  * in the Contentful field.
  * 
@@ -39,13 +44,12 @@ const Field = (props: FieldProps) => {
         valueName = 'Value', 
         keyName = "Item Name", 
         multiLineValues = false,
-        maxPageItems,
+        usePagination = false,
+        defaultPageItems = 100,
     } = props.sdk.parameters.instance as any;
-    const [state, setState] = useState<{items: Item[], page: number}>({
-        items: [],
-        page: 0,
-    });
-    const { items, page } = state;
+    const [items, setItems] = useState<Item[]>([]);
+    const [page, setPage] = useState(0);
+    const [pageItems, setPageItems] = useState(defaultPageItems);
 
     useEffect(() => {
         // This ensures our app has enough space to render
@@ -54,7 +58,7 @@ const Field = (props: FieldProps) => {
         // Every time we change the value on the field, we update internal state
         props.sdk.field.onValueChanged((value: Item[]) => {
             if (Array.isArray(value)) {
-                setState(prevState => ({...prevState, items: value}));
+                setItems(value);
             }
         });
     }, [props.sdk.field, props.sdk.window]);
@@ -64,10 +68,6 @@ const Field = (props: FieldProps) => {
         props.sdk.field.setValue([...items, createItem()]);
     };
 
-    const setPage = (page: number) => {
-        console.log("Set page", state);
-        setState(prevState => ({...prevState, page}));
-    }
     const incPage = () => setPage(page + 1);
     const decPage = () => setPage(page - 1);
 
@@ -92,35 +92,27 @@ const Field = (props: FieldProps) => {
 
     let displayItems = items;
     let numPages = 1
-    if (maxPageItems) {
-        displayItems = displayItems.slice(page * maxPageItems, page * maxPageItems + maxPageItems)
-        numPages = Math.ceil(items.length / maxPageItems)
+    if (usePagination) {
+        displayItems = displayItems.slice(page * pageItems, page * pageItems + pageItems)
+        numPages = Math.ceil(items.length / pageItems)
     }
 
-    const pagination = (maxPageItems)
-        ? (<div style={{ marginTop: tokens.spacingS, marginBottom: tokens.spacingS }}>
-            <Button
-                variant="secondary"
-                onClick={decPage}
-                startIcon={<ChevronLeftIcon />}
-                isDisabled={page <= 0}
-                style={{ marginRight: tokens.spacingXs }}></Button> 
-            <Button
-                variant="secondary"
-                style={{ margin: "0 " + tokens.spacingXs }}
-                isDisabled={true}>
-                {page + 1} / {numPages} {/* Display current page number */}
-            </Button>
-            <Button
-                variant="secondary"
-                onClick={incPage}
-                startIcon={<ChevronRightIcon />}
-                isDisabled={page >= numPages - 1}
-                style={{ marginLeft: tokens.spacingXs }}></Button>
-        </div>)
+
+
+    const pagination = (usePagination)
+        ? (<Pagination
+            activePage={page}
+            onPageChange={setPage}
+            itemsPerPage={pageItems}
+            showViewPerPage
+            viewPerPageOptions={removeDuplicates([20, 50, 100, defaultPageItems])}
+            onViewPerPageChange={setPageItems}
+            totalItems={items.length}
+            style={{ marginTop: tokens.spacingS, marginBottom: tokens.spacingS }}
+          />)
         : null;
 
-    const newPage = (page === numPages - 1)
+    const newitem = (page === numPages - 1)
         ? (
             <Button
                 variant="transparent"
@@ -173,7 +165,7 @@ const Field = (props: FieldProps) => {
                     ))}
                 </Table.Body>
             </Table>
-            {newPage}
+            {newitem}
             {pagination}
         </div>)
     );
