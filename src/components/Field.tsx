@@ -1,16 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import {
-    Button,
-    EditorToolbarButton,
-    Table,
-    TableBody,
-    TableRow,
-    TableCell,
-    TextField,
-} from '@contentful/forma-36-react-components';
 import tokens from '@contentful/forma-36-tokens';
 import { FieldExtensionSDK } from '@contentful/app-sdk';
 import { v4 as uuid } from 'uuid';
+
+import { Button, Table, FormControl, TextInput, Textarea, IconButton } from "@contentful/f36-components";
+
+import { ChevronLeftIcon, ChevronRightIcon, PlusCircleIcon, DeleteIcon } from "@contentful/f36-icons";
 
 interface FieldProps {
     sdk: FieldExtensionSDK;
@@ -104,83 +99,83 @@ const Field = (props: FieldProps) => {
 
     const pagination = (maxPageItems)
         ? (<div style={{ marginTop: tokens.spacingS, marginBottom: tokens.spacingS }}>
-            <Button 
-                buttonType="muted"
+            <Button
+                variant="secondary"
                 onClick={decPage}
-                icon="ChevronLeft"
-                disabled={page <= 0}
-                style={{ marginRight: tokens.spacingXs }}
-            ></Button> 
-            <Button 
-                buttonType="muted"
+                startIcon={<ChevronLeftIcon />}
+                isDisabled={page <= 0}
+                style={{ marginRight: tokens.spacingXs }}></Button> 
+            <Button
+                variant="secondary"
                 style={{ margin: "0 " + tokens.spacingXs }}
-                disabled={true}
-            >
+                isDisabled={true}>
                 {page + 1} / {numPages} {/* Display current page number */}
             </Button>
-            <Button 
-                buttonType="muted"
+            <Button
+                variant="secondary"
                 onClick={incPage}
-                icon="ChevronRight"
-                disabled={page >= numPages - 1}
-                style={{ marginLeft: tokens.spacingXs }}
-            ></Button>
+                startIcon={<ChevronRightIcon />}
+                isDisabled={page >= numPages - 1}
+                style={{ marginLeft: tokens.spacingXs }}></Button>
         </div>)
         : null;
 
     const newPage = (page === numPages - 1)
         ? (
             <Button
-                buttonType="naked"
+                variant="transparent"
                 onClick={addNewItem}
-                icon="PlusCircle"
-                style={{ marginTop: tokens.spacingS }}
-            >
+                startIcon={<PlusCircleIcon />}
+                style={{ marginTop: tokens.spacingS }}>
                 Add Item
             </Button>
         )
         : null;
 
+    const itemInput = (item: Item) => multiLineValues
+        ? <Textarea
+            name="value"
+            value={item.value}
+            onChange={createOnChangeHandler(item, 'value')} />
+        : <TextInput
+            name="value"
+            value={item.value}
+            onChange={createOnChangeHandler(item, 'value')} />
+
     return (
-        <div>
+        (<div>
             {pagination}
             <Table>
-                <TableBody>
+                <Table.Body>
                     {displayItems.map((item) => (
-                        <TableRow key={item.id}>
-                            <TableCell>
-                                <TextField
-                                    id="key"
-                                    name="key"
-                                    labelText={keyName}
-                                    value={item.key}
-                                    onChange={createOnChangeHandler(item, 'key')}
-                                />
-                            </TableCell>
-                            <TableCell>
-                                <TextField
-                                    id="value"
-                                    name="value"
-                                    labelText={valueName}
-                                    value={item.value}
-                                    onChange={createOnChangeHandler(item, 'value')}
-                                    textarea={multiLineValues}
-                                />
-                            </TableCell>
-                            <TableCell align="right">
-                                <EditorToolbarButton
-                                    label="delete"
-                                    icon="Delete"
+                        <Table.Row key={item.id}>
+                            <Table.Cell>
+                                <FormControl id="key">
+                                    <FormControl.Label>{keyName}</FormControl.Label>
+                                    <TextInput name="key" value={item.key} onChange={createOnChangeHandler(item, 'key')} />
+                                </FormControl>
+                            </Table.Cell>
+                            <Table.Cell>
+                                <FormControl id="value">
+                                    <FormControl.Label>{valueName}</FormControl.Label>
+                                    {itemInput(item)}
+                                </FormControl>
+                            </Table.Cell>
+                            <Table.Cell align="right">
+                                <IconButton
+                                    icon={<DeleteIcon variant="muted"/>}
+                                    aria-label="delete"
+                                    variant="transparent"
                                     onClick={() => deleteItem(item)}
                                 />
-                            </TableCell>
-                        </TableRow>
+                            </Table.Cell>
+                        </Table.Row>
                     ))}
-                </TableBody>
+                </Table.Body>
             </Table>
             {newPage}
             {pagination}
-        </div>
+        </div>)
     );
 };
 
