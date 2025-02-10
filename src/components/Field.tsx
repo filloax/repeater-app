@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import tokens from '@contentful/forma-36-tokens';
 import { FieldExtensionSDK } from '@contentful/app-sdk';
 import { v4 as uuid } from 'uuid';
-import {Button, Table, FormControl, TextInput, Textarea, IconButton, HelpText} from "@contentful/f36-components";
+import {Button, Table, FormControl, TextInput, Textarea, IconButton, HelpText, Checkbox} from "@contentful/f36-components";
 import { PlusCircleIcon, DeleteIcon } from "@contentful/f36-icons";
 import { Pagination } from '@contentful/f36-pagination';
+import styled, { keyframes } from 'styled-components';
 
 interface FieldProps {
     sdk: FieldExtensionSDK;
@@ -34,6 +35,14 @@ function removeDuplicates(a: number[]) {
     });
 }
 
+const SearchCheckboxLabel = styled(FormControl.Label)`
+  font-size: ${tokens.fontSizeS};
+  color: ${tokens.colorTextLightest};
+`;
+const SearchCheckbox = styled(Checkbox)`
+    margin: 0.2rem 2px 0 5px;
+`
+
 /** The Field component is the Repeater App which shows up 
  * in the Contentful field.
  * 
@@ -53,6 +62,10 @@ const Field = (props: FieldProps) => {
     const [pageItems, setPageItems] = useState(defaultPageItems);
     const [searchString, setSearchString] = useState('');
     const [lastEditedItemId, setLastEditedItemId] = useState<string | null>(null);
+    const [searchSettings, setSearchSettings] = useState({
+        key: true,
+        value: true,
+    });
 
     useEffect(() => {
         // This ensures our app has enough space to render
@@ -99,8 +112,8 @@ const Field = (props: FieldProps) => {
         !useSearch
         || searchString === ''
         || item.id === lastEditedItemId
-        || item.key.toLowerCase().includes(searchString)
-        || item.value.toLowerCase().includes(searchString)
+        || (searchSettings.key && item.key.toLowerCase().includes(searchString))
+        || (searchSettings.value && item.value.toLowerCase().includes(searchString))
     );
     let numPages = 1
     if (usePagination) {
@@ -148,6 +161,13 @@ const Field = (props: FieldProps) => {
         setSearchString(e.target.value.toLowerCase());
     }
 
+    const searchSettingsUpdate = (value: any) => {
+        if (!value.key && !value.value) {
+            return;
+        }
+        setSearchSettings(value);
+    }
+
     const searchInput = useSearch
         ? <div>
             <FormControl.Label style={{fontSize: tokens.fontSizeS}}>Search items:</FormControl.Label>
@@ -164,9 +184,28 @@ const Field = (props: FieldProps) => {
                 }}
                 onChange={onSearchUpdate}
             />
-            <HelpText
-                style={{fontSize: tokens.fontSizeS}}
-            >Search is done in both item keys and values.</HelpText>
+            <div style={{
+                display: "flex",
+                fontSize: tokens.fontSizeS,
+                color: tokens.colorTextLightest
+            }}>
+                <SearchCheckboxLabel>Search in:</SearchCheckboxLabel>
+                <SearchCheckbox
+                    name="search-keys"
+                    id="search-keys"
+                    isChecked={searchSettings.key}
+                    onChange={(e: any) => searchSettingsUpdate({...searchSettings, key: e.target.checked})}
+                ></SearchCheckbox>
+                <SearchCheckboxLabel>keys</SearchCheckboxLabel>
+                <SearchCheckbox
+                    name="search-values"
+                    id="search-values"
+                    isChecked={searchSettings.value}
+                    onChange={(e: any) => searchSettingsUpdate({...searchSettings, value: e.target.checked})}
+                >
+                </SearchCheckbox>
+                <SearchCheckboxLabel>values</SearchCheckboxLabel>
+            </div>
         </div>
         : null;
 
