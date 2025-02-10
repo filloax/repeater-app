@@ -31,6 +31,7 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "upload": "contentful-app-scripts upload --bundle-dir ./build",
+    "upload-eu": "contentful-app-scripts upload --bundle-dir ./build --host api.eu.contentful.com",
     "upload-ci": "contentful-app-scripts upload --ci --bundle-dir ./build --organization-id $CONTENTFUL_ORG_ID --definition-id $CONTENTFUL_APP_DEF_ID --token $CONTENTFUL_ACCESS_TOKEN"
   },
   "homepage": ".",

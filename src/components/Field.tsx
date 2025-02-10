@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import tokens from '@contentful/forma-36-tokens';
 import { FieldExtensionSDK } from '@contentful/app-sdk';
 import { v4 as uuid } from 'uuid';
-import { Button, Table, FormControl, TextInput, Textarea, IconButton } from "@contentful/f36-components";
+import {Button, Table, FormControl, TextInput, Textarea, IconButton, HelpText} from "@contentful/f36-components";
 import { PlusCircleIcon, DeleteIcon } from "@contentful/f36-icons";
 import { Pagination } from '@contentful/f36-pagination';
 
@@ -46,10 +46,13 @@ const Field = (props: FieldProps) => {
         multiLineValues = false,
         usePagination = false,
         defaultPageItems = 100,
+        useSearch = false,
     } = props.sdk.parameters.instance as any;
     const [items, setItems] = useState<Item[]>([]);
     const [page, setPage] = useState(0);
     const [pageItems, setPageItems] = useState(defaultPageItems);
+    const [searchString, setSearchString] = useState('');
+    const [lastEditedItemId, setLastEditedItemId] = useState<string | null>(null);
 
     useEffect(() => {
         // This ensures our app has enough space to render
@@ -83,6 +86,8 @@ const Field = (props: FieldProps) => {
         itemList.splice(index, 1, { ...item, [property]: e.target.value });
 
         props.sdk.field.setValue(itemList);
+
+        setLastEditedItemId(item.id);
     };
 
     /** Deletes an item from the list */
@@ -90,14 +95,18 @@ const Field = (props: FieldProps) => {
         props.sdk.field.setValue(items.filter((i) => i.id !== item.id));
     };
 
-    let displayItems = items;
+    let displayItems = items.filter(item =>
+        !useSearch
+        || searchString === ''
+        || item.id === lastEditedItemId
+        || item.key.toLowerCase().includes(searchString)
+        || item.value.toLowerCase().includes(searchString)
+    );
     let numPages = 1
     if (usePagination) {
         displayItems = displayItems.slice(page * pageItems, page * pageItems + pageItems)
         numPages = Math.ceil(items.length / pageItems)
     }
-
-
 
     const pagination = (usePagination)
         ? (<Pagination
@@ -134,8 +143,36 @@ const Field = (props: FieldProps) => {
             value={item.value}
             onChange={createOnChangeHandler(item, 'value')} />
 
+    const onSearchUpdate = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setLastEditedItemId(null);
+        setSearchString(e.target.value.toLowerCase());
+    }
+
+    const searchInput = useSearch
+        ? <div>
+            <FormControl.Label style={{fontSize: tokens.fontSizeS}}>Search items:</FormControl.Label>
+            <TextInput
+                name="search"
+                value={searchString}
+                style={{
+                    display: "inline-block",
+                    fontSize: tokens.fontSizeS,
+                    minHeight: "calc(" + tokens.fontSizeS + " + 5px)",
+                    padding: "10",
+                    width: "50%",
+                    marginLeft: tokens.spacingS,
+                }}
+                onChange={onSearchUpdate}
+            />
+            <HelpText
+                style={{fontSize: tokens.fontSizeS}}
+            >Search is done in both item keys and values.</HelpText>
+        </div>
+        : null;
+
     return (
         (<div>
+            {searchInput}
             {pagination}
             <Table>
                 <Table.Body>
