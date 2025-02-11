@@ -112,8 +112,8 @@ const Field = (props: FieldProps) => {
         !useSearch
         || searchString === ''
         || item.id === lastEditedItemId
-        || (searchSettings.key && item.key.toLowerCase().includes(searchString))
-        || (searchSettings.value && item.value.toLowerCase().includes(searchString))
+        || (searchSettings.key && item.key?.toString()?.toLowerCase()?.includes(searchString))
+        || (searchSettings.value && item.value?.toString()?.toLowerCase()?.includes(searchString))
     );
     let numPages = 1
     if (usePagination) {
