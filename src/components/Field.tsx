@@ -81,11 +81,10 @@ const Field = (props: FieldProps) => {
 
     /** Adds another item to the list */
     const addNewItem = () => {
-        props.sdk.field.setValue([...items, createItem()]);
+        const newItem = createItem();
+        setLastEditedItemId(newItem.id);
+        props.sdk.field.setValue([...items, newItem]);
     };
-
-    const incPage = () => setPage(page + 1);
-    const decPage = () => setPage(page - 1);
 
     /** Creates an `onChange` handler for an item based on its `property`
      * @returns A function which takes an `onChange` event 
