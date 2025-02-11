@@ -108,17 +108,18 @@ const Field = (props: FieldProps) => {
         props.sdk.field.setValue(items.filter((i) => i.id !== item.id));
     };
 
-    let displayItems = items.filter(item =>
+    const filteredItems = items.filter(item =>
         !useSearch
         || searchString === ''
         || item.id === lastEditedItemId
         || (searchSettings.key && item.key?.toString()?.toLowerCase()?.includes(searchString))
         || (searchSettings.value && item.value?.toString()?.toLowerCase()?.includes(searchString))
     );
+    let displayItems = filteredItems;
     let numPages = 1
     if (usePagination) {
         displayItems = displayItems.slice(page * pageItems, page * pageItems + pageItems)
-        numPages = Math.ceil(items.length / pageItems)
+        numPages = Math.ceil(filteredItems.length / pageItems)
     }
 
     const pagination = (usePagination)
@@ -129,7 +130,7 @@ const Field = (props: FieldProps) => {
             showViewPerPage
             viewPerPageOptions={removeDuplicates([20, 50, 100, defaultPageItems])}
             onViewPerPageChange={setPageItems}
-            totalItems={items.length}
+            totalItems={filteredItems.length}
             style={{ marginTop: tokens.spacingS, marginBottom: tokens.spacingS }}
           />)
         : null;
